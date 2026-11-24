@@ -1,5 +1,11 @@
 pipeline {
     agent any
+
+    environment {
+        PYTHON_DIR = 'C:\\Users\\HP\\AppData\\Local\\Python\\pythoncore-3.14-64'
+        PATH = "${PYTHON_DIR};${PYTHON_DIR}\\Scripts;${env.PATH}"
+    }
+
     stages {
         stage('Clonage') {
             steps {
