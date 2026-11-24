@@ -63,7 +63,6 @@ pipeline {
                 http://localhost:8081/repository/python-release/Release.zip
                 '''
             }
-            }
         }
     }
     post {
