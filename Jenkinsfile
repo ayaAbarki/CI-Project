@@ -7,6 +7,11 @@ pipeline {
     }
 
     stages {
+        stage('Nettoyage Workspace') {
+            steps {
+                deleteDir()
+            }
+        }
         stage('Clonage') {
             steps {
                 git branch: 'main',
@@ -24,9 +29,39 @@ pipeline {
                 bat 'python -m pip install -r requirements.txt'
             }
         }
+        stage('Analyse qualité du code - Pylint') {
+            steps {
+                bat 'python -m pylint calculator.py || exit /b 0'
+            }
+        }
         stage('Tests Unitaires') {
             steps {
-                bat 'python -m pytest'
+                bat 'python -m pytest --ignore=Release'
+            }
+        }
+        stage('Création de l artefact') {
+            steps {
+                bat ""
+                if exist Release rmdir /S /Q Release
+                if exist Release.zip del Release.zip
+
+                mkdir Release
+
+                copy calculator.py Release
+                copy test_calculator.py Release
+                copy requirements.txt Release
+                powershell Compress-Archive -Path Release\\* -DestinationPath Release.zip -Force
+                ""
+            }
+        }
+        stage('Publication de l artefact') {
+            steps {
+                bat ""
+                curl -v ^
+                -u admin:Nexus_1839@ ^
+                --upload-file Release.zip ^
+                http://localhost:8081/repository/python-release/Release.zip
+                ""
             }
         }
     }
