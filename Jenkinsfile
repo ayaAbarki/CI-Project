@@ -15,7 +15,7 @@ pipeline {
         stage('Clonage') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/ayaAbarki/CI-Project.git'
+                    url: 'https://github.com/ayaAbarki/CI-Project.git'
             }
         }
         stage('Vérification Python') {
@@ -41,7 +41,7 @@ pipeline {
         }
         stage('Création de l artefact') {
             steps {
-                bat ""
+                bat '''
                 if exist Release rmdir /S /Q Release
                 if exist Release.zip del Release.zip
 
@@ -51,17 +51,18 @@ pipeline {
                 copy test_calculator.py Release
                 copy requirements.txt Release
                 powershell Compress-Archive -Path Release\\* -DestinationPath Release.zip -Force
-                ""
+                '''
             }
         }
         stage('Publication de l artefact') {
             steps {
-                bat ""
-                curl -v ^
-                -u admin:Nexus_1839@ ^
-                --upload-file Release.zip ^
-                http://localhost:8081/repository/python-release/Release.zip
-                ""
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds',
+                                                  usernameVariable: 'NEXUS_USER',
+                                                  passwordVariable: 'NEXUS_PASS')]) {
+                    bat '''
+                    curl -v --fail -u %NEXUS_USER%:%NEXUS_PASS% --upload-file Release.zip http://localhost:8081/repository/python-release/Release.zip
+                    '''
+                }
             }
         }
     }
